@@ -40,3 +40,5 @@ Las pruebas son deterministas: un fallo es un fallo. Los benchmarks y la memoria
 ## Bloqueo de la integración
 
 La rama `main` está protegida: un pull request no se puede integrar si el check **Resultado final** falla.
+
+La regla se comprobó con el [pull request 5](https://github.com/DavidAbril411/planificador-de-tareas/pull/5), que invierte la prioridad a propósito: fallaron las pruebas, la etapa de rendimiento no llegó a correr y GitHub lo dejó bloqueado.
