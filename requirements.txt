@@ -1,0 +1,3 @@
+# Dependencias del programa. Las versiones de todo lo demás, en requirements-lock.txt.
+flask==3.1.3
+elastic-apm==6.26.2

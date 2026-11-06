@@ -1,0 +1,40 @@
+# Configuración de los controles de calidad (ver ci/controles.sh).
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules"
+testpaths = ["test_planificador.py", "planificador.py", "paralelo.py", "archivos.py"]
+
+[tool.coverage.run]
+source = ["."]
+omit = ["parcial2.py", "perfilar.py", "test_planificador.py", "anterior/*", "ci/*", "benchmarks/*", "docs/*", ".venv/*"]
+concurrency = ["multiprocessing"]
+parallel = true
+sigterm = true
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+
+[tool.ruff]
+line-length = 79
+extend-exclude = ["anterior", "docs"]
+
+[tool.ruff.lint]
+# UP006, UP035, UP045: el material enseña List y Optional de typing (PEP 484).
+# UP033: el material enseña lru_cache.
+# FURB122: escribir_linea_por_linea es lenta a propósito, para comparar.
+ignore = ["UP006", "UP035", "UP045", "UP033", "FURB122"]
+
+[tool.mypy]
+files = ["planificador.py", "paralelo.py", "archivos.py", "optimizaciones.py", "app.py"]
+ignore_missing_imports = true
+
+[tool.pylint.main]
+ignore = ["anterior", "docs", ".venv", "ci", "benchmarks"]
+fail-under = 9.5
+
+[tool.bandit]
+exclude_dirs = ["anterior", ".venv", "docs"]
+# B311: random solo genera datos de prueba, no se usa para seguridad.
+# B101: los assert están solo en los tests y controles.
+skips = ["B311", "B101"]

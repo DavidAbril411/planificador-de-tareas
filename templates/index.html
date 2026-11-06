@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planificador de tareas</title>
+<style>
+  :root { --rojo: #A3223A; --fondo: #f6f6f4; --borde: #ddd; --texto: #1d1d1f; --suave: #6e6e73; --verde: #2f7a4a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, Helvetica, sans-serif; background: var(--fondo); color: var(--texto); }
+  main { max-width: 1150px; margin: 0 auto; padding: 32px 20px 60px; }
+  h1 { margin: 0 0 4px; font-size: 30px; }
+  .bajada { margin: 0 0 24px; color: var(--suave); font-size: 17px; }
+  .grilla { display: grid; grid-template-columns: 1fr 1.4fr; gap: 20px; margin-bottom: 20px; }
+  @media (max-width: 880px) { .grilla { grid-template-columns: 1fr; } }
+  .caja { background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 20px; }
+  h2 { margin: 0 0 6px; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: var(--rojo); }
+  .ayuda { margin: 0 0 14px; font-size: 14px; color: var(--suave); line-height: 1.45; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 12px; color: var(--suave); font-weight: 500; padding: 0 4px 6px; }
+  td { padding: 3px 4px; }
+  input { width: 100%; padding: 7px 8px; border: 1px solid var(--borde); border-radius: 6px; font: inherit; font-size: 14px; }
+  button { font: inherit; font-size: 14px; border-radius: 8px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--borde); background: #fff; }
+  button.principal { background: var(--rojo); color: #fff; border-color: var(--rojo); font-size: 15px; padding: 10px 18px; }
+  button:disabled { opacity: .5; cursor: default; }
+  button.x { border: none; color: var(--suave); padding: 4px 8px; }
+  .botones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .chico { font-size: 13px; padding: 5px 10px; }
+
+  /* Ejecutar */
+  .procesos { display: flex; align-items: center; gap: 12px; margin: 4px 0 16px; padding: 12px; background: var(--fondo); border-radius: 10px; }
+  .procesos input { width: 160px; }
+  .procesos b { font-size: 20px; }
+  .carril { display: flex; align-items: center; height: 36px; border-bottom: 1px dashed var(--borde); }
+  .carril-nombre { width: 86px; font-size: 13px; color: var(--suave); flex: none; }
+  .pista { position: relative; flex: 1; height: 100%; }
+  .barra { position: absolute; top: 5px; height: 26px; border-radius: 6px; color: #fff; font-size: 13px;
+           display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; }
+  .barra.planeada { background: #e9e9ec !important; color: var(--suave); }
+  .eje { display: flex; justify-content: space-between; margin-left: 86px; font-size: 12px; color: var(--suave); padding-top: 4px; }
+  .estado { margin: 14px 0; font-size: 15px; min-height: 22px; }
+  .reloj { font-family: Menlo, monospace; font-size: 22px; margin-left: auto; }
+  .historial { margin-top: 6px; font-size: 14px; }
+  .historial div { display: flex; justify-content: space-between; padding: 6px 0; border-top: 1px solid #eee; }
+  .historial .mejor { color: var(--verde); font-weight: 600; }
+  .error { color: var(--rojo); font-weight: 500; }
+
+  /* Planificador por dentro */
+  .paso { display: grid; grid-template-columns: 34px 1fr 60px 150px; gap: 14px; align-items: center;
+          padding: 12px 0; border-bottom: 1px solid #eee; }
+  .numero-paso { width: 28px; height: 28px; border-radius: 50%; background: var(--fondo); display: grid; place-items: center; font-size: 13px; font-weight: 600; }
+  .paso.midiendo .numero-paso { background: var(--rojo); color: #fff; }
+  .paso.listo .numero-paso { background: #e6f2ea; color: var(--verde); }
+  .paso b { display: block; font-size: 15px; }
+  .paso small { display: block; color: var(--suave); font-size: 13px; margin-top: 2px; }
+  .paso code { font-size: 12px; background: var(--fondo); padding: 1px 6px; border-radius: 4px; }
+  .interruptor { position: relative; width: 44px; height: 26px; }
+  .interruptor input { opacity: 0; width: 0; height: 0; }
+  .interruptor span { position: absolute; inset: 0; background: #ccc; border-radius: 99px; cursor: pointer; transition: .2s; }
+  .interruptor span::before { content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px;
+                              background: #fff; border-radius: 50%; transition: .2s; }
+  .interruptor input:checked + span { background: var(--rojo); }
+  .interruptor input:checked + span::before { transform: translateX(18px); }
+  .tiempo { text-align: right; font-family: Menlo, monospace; font-size: 15px; }
+  .tiempo small { font-family: -apple-system, Helvetica, sans-serif; }
+  .total { display: flex; gap: 24px; align-items: baseline; margin-top: 16px; flex-wrap: wrap; }
+  .total b { font-size: 28px; }
+  .total span { color: var(--suave); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Planificador de tareas</h1>
+  <p class="bajada">Le das tareas que dependen unas de otras. El programa decide en qué orden correrlas,
+     cuáles pueden ir al mismo tiempo, y las ejecuta.</p>
+
+  <div class="grilla">
+    <section class="caja">
+      <h2>1. Las tareas</h2>
+      <p class="ayuda">Cada tarea hace trabajo de CPU durante su duración. "Depende de" = tiene que esperar a esas.</p>
+      <div class="botones" style="margin-bottom:10px">
+        <button class="chico" onclick="cargar('enunciado')">Ejemplo del enunciado</button>
+        <button class="chico" onclick="cargar('sueltas')">8 tareas sueltas</button>
+        <button class="chico" onclick="cargar('cadena')">En cadena</button>
+      </div>
+      <table>
+        <thead><tr><th>Nombre</th><th>Duración (s)</th><th>Prioridad</th><th>Depende de</th><th></th></tr></thead>
+        <tbody id="filas"></tbody>
+      </table>
+      <div class="botones" style="margin-top:10px"><button class="chico" onclick="agregarFila()">+ Agregar tarea</button></div>
+    </section>
+
+    <section class="caja">
+      <h2>2. Ejecutarlas · paralelismo</h2>
+      <p class="ayuda">Con <b>1 proceso</b> se ejecutan de a una. Con más, <code>multiprocessing</code> reparte las
+         tareas que no dependen entre sí en varios núcleos. Probá con 1 y después con más.</p>
+      <div class="procesos">
+        <input type="range" id="procesos" min="1" max="8" value="1" oninput="planificar()">
+        <span><b id="procesos-valor">1</b> <span id="procesos-texto">proceso (sin paralelismo)</span></span>
+      </div>
+      <div id="gantt"></div>
+      <div class="botones estado">
+        <button class="principal" id="ejecutar" onclick="ejecutar()">▶ Ejecutar de verdad</button>
+        <span id="estado"></span>
+        <span class="reloj" id="reloj"></span>
+      </div>
+      <div class="historial" id="historial"></div>
+    </section>
+  </div>
+
+  <section class="caja">
+    <h2>3. El planificador por dentro · las demás optimizaciones</h2>
+    <p class="ayuda">Antes de ejecutar, el programa <b>planifica</b>: elige el orden y calcula cuándo termina cada tarea.
+       Con tus 4 tareas eso tarda menos de un milisegundo y no se nota nada. Para que se note, acá se usa un
+       <b>proyecto de prueba de 2.000 tareas que inventa el programa</b> (T0 a T1999, cada una espera a hasta 3 anteriores),
+       como sería la obra de un edificio. Estas son las cosas que hace para planificar, cada una con su optimización.
+       Tocá <b>Apagar todas</b> → <b>Planificar</b>, y después <b>Prender todas</b> → <b>Planificar</b>.</p>
+    <div id="pasos"></div>
+    <div class="total">
+      <button class="principal" id="medir" onclick="medirTodo()">Planificar el proyecto grande</button>
+      <button class="chico" onclick="prenderTodas(true)">Prender todas</button>
+      <button class="chico" onclick="prenderTodas(false)">Apagar todas</button>
+      <div id="total"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const EJEMPLOS = {
+  enunciado: [["A", 2, 1, ""], ["B", 1.5, 2, "A"], ["C", 1, 1, "A"], ["D", 0.5, 3, "B, C"]],
+  cadena: [["T1", 1, 1, ""], ["T2", 1, 1, "T1"], ["T3", 1, 1, "T2"], ["T4", 1, 1, "T3"]],
+  sueltas: [["T1", 1, 1, ""], ["T2", 1, 1, ""], ["T3", 1, 1, ""], ["T4", 1, 1, ""],
+            ["T5", 1, 1, ""], ["T6", 1, 1, ""], ["T7", 1, 1, ""], ["T8", 1, 1, ""]],
+};
+const COLORES = ["#A3223A", "#2E6F95", "#3C8D5A", "#C77D1A", "#6B4FA0", "#B0457B", "#4A7A7A", "#8A6A3A"];
+let plan = null;
+let historial = [];
+
+const segundos = (valor, decimales = 1) => valor.toFixed(decimales).replace(".", ",") + " s";
+const formato = valor => valor < 0.01 ? `${(valor * 1000).toFixed(1).replace(".", ",")} ms` : segundos(valor, 2);
+
+// ---------- 1. Las tareas ----------
+function agregarFila(datos = ["", 1, 1, ""]) {
+  const fila = document.createElement("tr");
+  fila.innerHTML = `
+    <td><input value="${datos[0]}"></td>
+    <td><input type="number" min="0.1" max="5" step="0.5" value="${datos[1]}"></td>
+    <td><input type="number" min="1" step="1" value="${datos[2]}"></td>
+    <td><input value="${datos[3]}" placeholder="—"></td>
+    <td><button class="x" title="Quitar">✕</button></td>`;
+  fila.querySelector(".x").onclick = () => { fila.remove(); cambio(); };
+  fila.querySelectorAll("input").forEach(campo => campo.oninput = cambio);
+  document.getElementById("filas").appendChild(fila);
+}
+
+function cambio() { historial = []; dibujarHistorial(); planificar(); }
+
+function cargar(nombre) {
+  document.getElementById("filas").innerHTML = "";
+  EJEMPLOS[nombre].forEach(agregarFila);
+  cambio();
+}
+
+function leerTareas() {
+  const tareas = {};
+  document.querySelectorAll("#filas tr").forEach(fila => {
+    const [nombre, duracion, prioridad, depende] = [...fila.querySelectorAll("input")].map(c => c.value.trim());
+    if (!nombre) return;
+    tareas[nombre] = {
+      duracion: parseFloat(duracion) || 1,
+      prioridad: parseInt(prioridad) || 1,
+      depende_de: depende ? depende.split(",").map(d => d.trim()).filter(Boolean) : [],
+    };
+  });
+  return tareas;
+}
+
+function procesos() {
+  const valor = parseInt(document.getElementById("procesos").value);
+  document.getElementById("procesos-valor").textContent = valor;
+  document.getElementById("procesos-texto").textContent =
+    valor === 1 ? "proceso (sin paralelismo)" : "procesos en paralelo";
+  return valor;
+}
+
+async function enviar(ruta, cuerpo) {
+  const respuesta = await fetch(ruta, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo),
+  });
+  return respuesta.json();
+}
+
+// ---------- 2. Ejecutar ----------
+// Dibuja un Gantt: `tiempos` es {tarea: [inicio, fin, carril]}.
+function dibujarGantt(tiempos, total, planeada) {
+  const nombres = Object.keys(plan.cronograma);
+  const carriles = Math.max(...Object.values(tiempos).map(t => t[2])) + 1;
+  let html = "";
+  for (let c = 0; c < carriles; c++) {
+    let barras = "";
+    for (const [nombre, [inicio, fin, carril]] of Object.entries(tiempos)) {
+      if (carril !== c) continue;
+      const color = COLORES[nombres.indexOf(nombre) % COLORES.length];
+      barras += `<div class="barra ${planeada ? "planeada" : ""}" data-tarea="${nombre}"
+        style="left:${inicio / total * 100}%;width:calc(${(fin - inicio) / total * 100}% - 3px);background:${color}">${nombre}</div>`;
+    }
+    html += `<div class="carril"><span class="carril-nombre">Proceso ${c + 1}</span><div class="pista">${barras}</div></div>`;
+  }
+  document.getElementById("gantt").innerHTML = html +
+    `<div class="eje"><span>0 s</span><span>${segundos(total / 2)}</span><span>${segundos(total)}</span></div>`;
+}
+
+async function planificar() {
+  const respuesta = await enviar("/plan", { tareas: leerTareas(), procesos: procesos() });
+  if (respuesta.error) {
+    plan = null;
+    document.getElementById("gantt").innerHTML = `<p class="error">${respuesta.error}</p>`;
+    return;
+  }
+  plan = respuesta;
+  dibujarGantt(plan.cronograma, plan.duracion, true);
+  document.getElementById("estado").textContent = `El plan dice: ${segundos(plan.duracion)}`;
+  document.getElementById("reloj").textContent = "";
+}
+
+async function ejecutar() {
+  if (!plan) return;
+  const boton = document.getElementById("ejecutar");
+  const cantidad = procesos();
+  boton.disabled = true;
+  document.getElementById("estado").textContent = "Ejecutando…";
+
+  // Mientras el servidor trabaja, las barras del plan se van pintando.
+  const comienzo = performance.now();
+  const reloj = setInterval(() => {
+    const t = (performance.now() - comienzo) / 1000;
+    document.getElementById("reloj").textContent = segundos(t);
+    for (const [nombre, [inicio, fin]] of Object.entries(plan.cronograma)) {
+      const barra = document.querySelector(`[data-tarea="${nombre}"]`);
+      const avance = Math.min(1, Math.max(0, (t - inicio) / (fin - inicio)));
+      barra.classList.toggle("planeada", avance === 0);
+      barra.style.clipPath = avance > 0 ? `inset(0 ${100 - avance * 100}% 0 0)` : "";
+    }
+  }, 50);
+
+  const resultado = await enviar("/ejecutar", { tareas: leerTareas(), procesos: cantidad });
+  clearInterval(reloj);
+  boton.disabled = false;
+  if (resultado.error) { document.getElementById("estado").innerHTML = `<span class="error">${resultado.error}</span>`; return; }
+
+  // Con los tiempos reales medidos.
+  dibujarGantt(resultado.registro, resultado.total, false);
+  document.getElementById("reloj").textContent = segundos(resultado.total, 2);
+  document.getElementById("estado").textContent = "Terminó (tiempos reales):";
+  historial.push({ procesos: cantidad, total: resultado.total });
+  dibujarHistorial();
+}
+
+function dibujarHistorial() {
+  if (!historial.length) { document.getElementById("historial").innerHTML = ""; return; }
+  const base = historial.find(h => h.procesos === 1);
+  document.getElementById("historial").innerHTML = historial.map(h => {
+    const mejora = base && h.procesos > 1 ? `<span class="mejor">${(base.total / h.total).toFixed(1).replace(".", ",")}x más rápido</span>` : "<span></span>";
+    return `<div><span>${h.procesos === 1 ? "1 proceso (sin paralelismo)" : h.procesos + " procesos"}</span>${mejora}<b>${segundos(h.total, 2)}</b></div>`;
+  }).join("");
+}
+
+// ---------- 3. El planificador por dentro ----------
+let pasos = [];
+let anteriores = {};
+let totalAnterior = null;
+
+async function cargarPasos() {
+  pasos = await (await fetch("/pasos")).json();
+  document.getElementById("pasos").innerHTML = pasos.map((paso, i) => `
+    <div class="paso" id="paso-${paso.clave}">
+      <span class="numero-paso">${i + 1}</span>
+      <div><b>${paso.paso}</b>
+        <small>Optimización: <b style="display:inline;font-size:13px">${paso.nombre}</b> <code>${paso.biblioteca}</code></small>
+        <small><span style="color:#9a3a3a">Sin ella:</span> ${paso.sin}.
+               <span style="color:var(--verde)">Con ella:</span> ${paso.con}.</small></div>
+      <label class="interruptor" title="Prender o apagar la optimización"><input type="checkbox" id="con-${paso.clave}" checked><span></span></label>
+      <div class="tiempo" id="tiempo-${paso.clave}">—</div>
+    </div>`).join("");
+}
+
+function prenderTodas(valor) {
+  pasos.forEach(paso => document.getElementById(`con-${paso.clave}`).checked = valor);
+}
+
+async function medirTodo() {
+  const boton = document.getElementById("medir");
+  boton.disabled = true;
+  const tiempos = {};
+  pasos.forEach(paso => {
+    document.getElementById(`paso-${paso.clave}`).className = "paso";
+    document.getElementById(`tiempo-${paso.clave}`).textContent = "";
+  });
+  for (const paso of pasos) {
+    const fila = document.getElementById(`paso-${paso.clave}`);
+    fila.className = "paso midiendo";
+    const con = document.getElementById(`con-${paso.clave}`).checked;
+    const { segundos: medido } = await enviar("/medir", { clave: paso.clave, con });
+    tiempos[paso.clave] = medido;
+    fila.className = "paso listo";
+    const antes = anteriores[paso.clave];
+    document.getElementById(`tiempo-${paso.clave}`).innerHTML = formato(medido) +
+      (antes === undefined ? "" : `<br><small style="color:var(--suave)">antes ${formato(antes)}</small>`);
+  }
+  const total = Object.values(tiempos).reduce((a, b) => a + b, 0);
+  document.getElementById("total").innerHTML = `<b>${formato(total)}</b> <span>tardó en planificar` +
+    (totalAnterior === null ? "" : ` · antes ${formato(totalAnterior)}`) + "</span>";
+  anteriores = tiempos;
+  totalAnterior = total;
+  boton.disabled = false;
+}
+
+cargarPasos().then(() => { if (location.hash === "#medir") medirTodo(); });
+cargar("enunciado");
+// Atajo para demos: #ejecutar=2 ejecuta con 2 procesos al abrir la página.
+if (location.hash.startsWith("#ejecutar")) {
+  const cantidad = location.hash.split("=")[1];
+  if (cantidad) document.getElementById("procesos").value = cantidad;
+  setTimeout(async () => { await planificar(); ejecutar(); }, 500);
+}
+</script>
+</body>
+</html>

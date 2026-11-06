@@ -1,0 +1,116 @@
+# Pipeline de integración continua. Los comandos están en ci/controles.sh,
+# así el CI y una computadora local corren exactamente lo mismo.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  GITLEAKS_VERSION: "8.30.1"
+  LYCHEE_VERSION: "0.24.2"
+
+jobs:
+  estatica:
+    name: Calidad estática
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+      - run: pip install -r requirements-lock.txt
+      - name: Instalar Gitleaks
+        run: |
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
+          sudo mv gitleaks /usr/local/bin/
+      - run: ./ci/controles.sh estatica
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reportes-estatica
+          path: reportes/
+
+  pruebas:
+    name: Pruebas y cobertura
+    needs: estatica
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+      - run: pip install -r requirements-lock.txt
+      - run: ./ci/controles.sh pruebas
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reportes-pruebas
+          path: reportes/
+
+  seguridad:
+    name: Seguridad y documentación
+    needs: estatica
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+      - run: pip install -r requirements-lock.txt
+      - name: Instalar Lychee
+        run: |
+          curl -sSL "https://github.com/lycheeverse/lychee/releases/download/lychee-v${LYCHEE_VERSION}/lychee-x86_64-unknown-linux-gnu.tar.gz" | tar -xz
+          sudo mv lychee /usr/local/bin/
+      - run: ./ci/controles.sh seguridad
+      - run: ./ci/controles.sh documentacion
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reportes-seguridad
+          path: reportes/
+
+  rendimiento:
+    name: Rendimiento y memoria
+    needs: pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+      - run: pip install -r requirements-lock.txt
+      - run: ./ci/controles.sh rendimiento
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reportes-rendimiento
+          path: reportes/
+
+  resultado:
+    name: Resultado final
+    if: always()
+    needs: [estatica, pruebas, seguridad, rendimiento]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aprobar o rechazar
+        run: |
+          test "${{ needs.estatica.result }}" = success
+          test "${{ needs.pruebas.result }}" = success
+          test "${{ needs.seguridad.result }}" = success
+          test "${{ needs.rendimiento.result }}" = success

@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.coverage*
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+reportes/
+docs/_build/
+*.prof
+scalene-profile.*
+.DS_Store
+.obsidian/workspace*

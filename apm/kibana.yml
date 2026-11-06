@@ -1,0 +1,6 @@
+server.host: "0.0.0.0"
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+# Instala la integración de APM al arrancar (crea los índices de APM).
+xpack.fleet.packages:
+  - name: apm
+    version: latest
