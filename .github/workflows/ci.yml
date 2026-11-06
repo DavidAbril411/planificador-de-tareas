@@ -34,7 +34,7 @@ jobs:
           curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
           sudo mv gitleaks /usr/local/bin/
       - run: ./ci/controles.sh estatica
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: reportes-estatica
@@ -53,7 +53,7 @@ jobs:
           cache-dependency-path: requirements-lock.txt
       - run: pip install -r requirements-lock.txt
       - run: ./ci/controles.sh pruebas
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: reportes-pruebas
@@ -77,7 +77,7 @@ jobs:
           sudo mv lychee /usr/local/bin/
       - run: ./ci/controles.sh seguridad
       - run: ./ci/controles.sh documentacion
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: reportes-seguridad
@@ -96,7 +96,7 @@ jobs:
           cache-dependency-path: requirements-lock.txt
       - run: pip install -r requirements-lock.txt
       - run: ./ci/controles.sh rendimiento
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: reportes-rendimiento
