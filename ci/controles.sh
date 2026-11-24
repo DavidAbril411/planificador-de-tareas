@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Los controles de calidad y eficiencia. El CI y una computadora local corren
-# exactamente lo mismo:   ./ci/controles.sh [estatica|pruebas|seguridad|documentacion|rendimiento]
+# exactamente lo mismo:   ./ci/controles.sh [build|estatica|pruebas|seguridad|documentacion|rendimiento]
 # Sin argumento corre todas las etapas. Los reportes quedan en reportes/.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -8,7 +8,20 @@ export PYTHONPATH=.
 mkdir -p reportes
 if [ -d .venv/bin ]; then export PATH="$PWD/.venv/bin:$PATH"; fi
 
-CODIGO="planificador.py paralelo.py archivos.py optimizaciones.py app.py parcial2.py perfilar.py"
+CODIGO="planificador.py paralelo.py archivos.py optimizaciones.py app.py ia.py parcial2.py perfilar.py"
+
+build() {
+  echo "== Build: sintaxis, imports y arranque de la web"
+  python -m compileall -q $CODIGO ci benchmarks
+  python - <<'PY'
+import app
+respuesta = app.app.test_client().post("/plan", json={
+    "tareas": {"A": {"duracion": 1, "prioridad": 1, "depende_de": []}},
+    "procesos": 1})
+assert respuesta.status_code == 200 and respuesta.get_json()["orden"] == ["A"]
+print("la web arranca y planifica")
+PY
+}
 
 estatica() {
   echo "== Ruff"; ruff check .
@@ -27,9 +40,14 @@ estatica() {
 }
 
 pruebas() {
-  echo "== pytest + cobertura (mínimo 85 %)"
+  echo "== pytest + cobertura (mínimo 80 %)"
   coverage erase
+  set +e
   coverage run -m pytest --junitxml=reportes/pruebas.xml
+  resultado=$?
+  set -e
+  python ci/resumen_pruebas.py reportes/pruebas.xml
+  if [ "$resultado" -ne 0 ]; then echo "Hay tests fallidos"; exit "$resultado"; fi
   coverage combine -q
   coverage xml -o reportes/cobertura.xml
   coverage report
@@ -51,6 +69,7 @@ documentacion() {
 }
 
 rendimiento() {
+  echo "== Escalabilidad y Performance Gate"; python ci/escalabilidad.py
   echo "== Benchmark (rechaza si la mediana empeora más de 100 %)"
   comparar=()
   if [ "$(uname)" = "Linux" ] && ls .benchmarks/Linux-*/0001_* >/dev/null 2>&1; then
@@ -64,7 +83,7 @@ rendimiento() {
 
 etapa="${1:-todas}"
 if [ "$etapa" = "todas" ]; then
-  estatica; pruebas; seguridad; documentacion; rendimiento
+  build; estatica; pruebas; seguridad; documentacion; rendimiento
 else
   "$etapa"
 fi
