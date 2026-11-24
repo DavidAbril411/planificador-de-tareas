@@ -380,6 +380,7 @@ async function cargarComparacion() {
 }
 
 cargarComparacion();
+if (location.hash === "#estimar") estimar();
 cargarPasos().then(() => { if (location.hash === "#medir") medirTodo(); });
 cargar("enunciado");
 // Atajo para demos: #ejecutar=2 ejecuta con 2 procesos al abrir la página.
