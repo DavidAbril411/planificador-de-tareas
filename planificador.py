@@ -127,7 +127,8 @@ def orden_rapido(tareas: Tareas) -> Optional[List[str]]:
         _, nombre = heapq.heappop(listas)
         orden.append(nombre)
         for liberada in liberar_siguientes(nombre, pendientes, siguientes):
-            heapq.heappush(listas, clave_de_prioridad(tareas, liberada))
+            listas.append(clave_de_prioridad(tareas, liberada))
+            heapq.heapify(listas)
 
     return orden if len(orden) == len(tareas) else None
 
