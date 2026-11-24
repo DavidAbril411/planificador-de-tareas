@@ -22,8 +22,10 @@ Los controles rápidos corren primero. Pruebas y seguridad corren en paralelo. L
 | Control | Herramienta | Comando (`./ci/controles.sh`) | Reporte | Se rechaza si |
 |---|---|---|---|---|
 | Pruebas | pytest, unittest, doctest | `pruebas` | `pruebas.xml` | Falla una o más pruebas |
-| Cobertura | coverage.py | `pruebas` | `cobertura.xml` | Baja de 85 % |
+| Cobertura | coverage.py | `pruebas` | `cobertura.xml` | Baja de 80 % |
 | Benchmark | pytest-benchmark | `rendimiento` | `benchmark.json` | La mediana empeora más de 100 % contra la línea base |
+| **Performance Gate** | `ci/escalabilidad.py` | `rendimiento` | `escalabilidad.json` | Ordenar 100.000 tareas tarda 1 s o más (`Performance Gate FAILED`) |
+| Build | compileall, Flask | `build` | Consola | El código no compila o la web no planifica |
 | Profiling de CPU | cProfile | `rendimiento` | `orden_*.prof` | `orden_rapido` no le gana a `orden_lento` |
 | Análisis estático | Ruff, Pylint | `estatica` | Consola | Hay un aviso de Ruff o Pylint da menos de 9,5 |
 | Complejidad | Radon | `estatica` | `radon.json` | Una función supera 10 |
