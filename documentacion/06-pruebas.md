@@ -7,6 +7,8 @@
 | Unitarias | `unittest`, corridas con pytest | Orden, duración, cronograma, caché, archivos y paralelismo |
 | De integración | Cliente de pruebas de Flask | Las rutas de la web |
 | Documentación ejecutable | `doctest` | Los ejemplos de los docstrings |
+| Basadas en propiedades | Hypothesis | Cientos de proyectos generados al azar: orden válido, lento y rápido coinciden, más recursos nunca tardan más |
+| IA | `unittest` | El modelo le gana al promedio, el historial es reproducible y la ruta `/estimar` valida los datos |
 
 ## Casos de prueba
 
@@ -23,8 +25,8 @@
 
 | Métrica | Valor | Mínimo |
 |---|---|---|
-| Pruebas | 40, todas pasan | Todas |
-| Cobertura | 97 % | 85 % |
+| Pruebas | 48, todas pasan | Todas |
+| Cobertura | 96 % | 80 % |
 
 La cobertura no cuenta `parcial2.py` ni `perfilar.py`, que son programas de demostración. Lo que no se cubre es el arranque del servidor y el caso con Elastic APM activo.
 
