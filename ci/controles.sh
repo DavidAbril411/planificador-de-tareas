@@ -69,6 +69,7 @@ documentacion() {
 }
 
 rendimiento() {
+  echo "== Escalabilidad y Performance Gate"; python ci/escalabilidad.py
   echo "== Benchmark (rechaza si la mediana empeora más de 100 %)"
   comparar=()
   if [ "$(uname)" = "Linux" ] && ls .benchmarks/Linux-*/0001_* >/dev/null 2>&1; then
@@ -76,7 +77,6 @@ rendimiento() {
   fi
   pytest benchmarks --doctest-modules --benchmark-only \
     --benchmark-json=reportes/benchmark.json "${comparar[@]+"${comparar[@]}"}"
-  echo "== Escalabilidad y Performance Gate"; python ci/escalabilidad.py
   echo "== Profiling de CPU"; python ci/perfil.py
   echo "== Memoria (límite 5 MB)"; python ci/memoria.py
 }
