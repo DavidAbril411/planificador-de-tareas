@@ -61,4 +61,3 @@ Cada pull request rompe un criterio a propósito y no se integra:
 3. El Performance Gate lo detecta, la etapa Performance falla y el pull request queda bloqueado.
 
 Es lo que justifica el gate: ningún otro control detecta una regresión que no cambia el resultado.
-
