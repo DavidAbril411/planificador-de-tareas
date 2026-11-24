@@ -374,7 +374,7 @@ async function cargarComparacion() {
     <table class="ia-tabla"><thead><tr><th>Estimador · 1.000 tareas nuevas</th><th>Error medio</th>
       <th>Por estimación</th><th>Entrenar</th><th>Memoria</th></tr></thead>
     <tbody>${fila("Sin IA: promedio del tipo", c.sin_ia)}${fila("Con IA: RandomForest", c.con_ia)}</tbody></table>
-    <p class="ayuda" style="margin-top:10px">La IA se equivoca ${(c.sin_ia.mae / c.con_ia.mae).toFixed(0)} veces menos porque tiene en cuenta
+    <p class="ayuda" style="margin-top:10px">La IA se equivoca ${(c.sin_ia.mae / c.con_ia.mae).toFixed(1).replace(".", ",")} veces menos porque tiene en cuenta
       unidades, operarios y máquina, pero cada estimación cuesta ${(c.con_ia.estimar_us / c.sin_ia.estimar_us).toFixed(0)} veces más
       (sigue siendo microsegundos). Conviene para planificar; si solo hay un tipo de tarea, alcanza el promedio.</p>`;
 }

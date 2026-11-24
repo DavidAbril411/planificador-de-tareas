@@ -25,7 +25,7 @@ Sobre 1.000 tareas que ninguno de los dos vio al entrenar (`ia.comparar_estimado
 
 ## Cuándo conviene
 
-La IA se equivoca unas 11 veces menos porque usa los datos que realmente cambian la duración. Cuesta unas 200 veces más por estimación, pero siguen siendo microsegundos: para planificar conviene. Si la planta tuviera un solo tipo de tarea y siempre la misma cantidad, el promedio alcanzaría, sería más simple y no necesitaría scikit-learn.
+La IA se equivoca 11,6 veces menos porque usa los datos que realmente cambian la duración. Cuesta unas 200 veces más por estimación, pero siguen siendo microsegundos: para planificar conviene. Si la planta tuviera un solo tipo de tarea y siempre la misma cantidad, el promedio alcanzaría, sería más simple y no necesitaría scikit-learn.
 
 El modelo se entrena una sola vez y queda en caché (`lru_cache`).
 
