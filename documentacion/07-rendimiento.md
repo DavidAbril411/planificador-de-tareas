@@ -14,7 +14,7 @@ El CI compara contra una línea base medida en el propio runner, y rechaza si la
 
 ## Escalabilidad y Performance Gate
 
-`ci/escalabilidad.py` mide con 1.000, 10.000 y 100.000 tareas (mediana de 5 corridas):
+`ci/escalabilidad.py` mide con 1.000, 10.000 y 100.000 tareas (mediana de 5 corridas). Medido en mi Mac; en el runner de GitHub da 0,213 s y 16,3x, y cada corrida publica su tabla en el resumen:
 
 | Tareas | `orden_rapido` | Crecimiento |
 |---:|---:|---:|
