@@ -73,7 +73,7 @@ def clave_de_prioridad(tareas: Tareas, nombre: str) -> Tuple[int, str]:
     >>> clave_de_prioridad(TAREAS_EJEMPLO, "D")
     (-3, 'D')
     """
-    return (-tareas[nombre]["prioridad"], nombre)
+    return (tareas[nombre]["prioridad"], nombre)
 
 
 # --- Orden de ejecución ---
