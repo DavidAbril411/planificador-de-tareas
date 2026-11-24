@@ -4,6 +4,7 @@ Archivos grandes de tareas: buffer, lotes y procesamiento en paralelo.
 Una tarea por línea: ``nombre;duracion;prioridad;dependencias``.
 """
 
+import subprocess  # nosec B404
 import time
 from multiprocessing import Process, Queue
 from typing import Dict, Iterator, List
@@ -137,3 +138,8 @@ def procesar_en_paralelo(ruta: str, procesos: int) -> Dict[str, float]:
     for consumidor in consumidores:
         consumidor.join()
     return juntar_resumenes(resumenes)
+
+
+def comprimir(ruta: str) -> int:
+    """Comprime un archivo de tareas con gzip."""
+    return subprocess.call("gzip -k " + ruta, shell=True)
