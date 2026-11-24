@@ -12,6 +12,22 @@ Medidos con pytest-benchmark sobre el proyecto de prueba de 2.000 tareas que inv
 
 El CI compara contra una línea base medida en el propio runner, y rechaza si la mediana empeora más del 100 %.
 
+## Escalabilidad y Performance Gate
+
+`ci/escalabilidad.py` mide con 1.000, 10.000 y 100.000 tareas (mediana de 5 corridas):
+
+| Tareas | `orden_rapido` | Crecimiento |
+|---:|---:|---:|
+| 1.000 | 0,0010 s | |
+| 10.000 | 0,013 s | 13x |
+| 100.000 | 0,29 s | 23x |
+
+La complejidad O(n + d) predice ~10x por cada 10 de entrada (un poco más por el log del heap), y así crece hasta 10.000. Con 100.000 crece 23x: las estructuras ya no entran en la caché del procesador, y las dependencias al azar obligan a ir a la RAM. Se comprobó midiendo el mismo tamaño con dependencias consecutivas: ahí crece 14x.
+
+`orden_lento` (O(n²)) crece ~4x cada vez que se duplica la entrada, como predice la teoría.
+
+**Performance Gate:** ordenar 100.000 tareas tiene que tardar menos de 1 s. Si no, el CI imprime `Performance Gate FAILED` y la integración queda bloqueada.
+
 ## Mejora de cada optimización
 
 | Paso | Herramienta | Mejora |

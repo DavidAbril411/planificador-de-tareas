@@ -66,6 +66,16 @@
   .total { display: flex; gap: 24px; align-items: baseline; margin-top: 16px; flex-wrap: wrap; }
   .total b { font-size: 28px; }
   .total span { color: var(--suave); font-size: 14px; }
+.ia-form { display:grid; grid-template-columns: repeat(5, 1fr) auto; gap:10px; align-items:end; margin-bottom:14px; }
+  @media (max-width: 880px) { .ia-form { grid-template-columns: 1fr 1fr; } }
+  .ia-form label { font-size:12px; color:var(--suave); display:flex; flex-direction:column; gap:4px; }
+  select { width:100%; padding:7px 8px; border:1px solid var(--borde); border-radius:6px; font:inherit; font-size:14px; background:#fff; }
+  .ia-res { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .ia-num { flex:1; min-width:160px; background:var(--fondo); border-radius:10px; padding:12px; }
+  .ia-num b { display:block; font-size:24px; }
+  .ia-num span { font-size:13px; color:var(--suave); }
+  .ia-num.ia b { color:var(--rojo); }
+  table.ia-tabla td, table.ia-tabla th { padding:6px 8px; font-size:14px; }
 </style>
 </head>
 <body>
@@ -122,6 +132,23 @@
       <button class="chico" onclick="prenderTodas(false)">Apagar todas</button>
       <div id="total"></div>
     </div>
+  </section>
+
+  <section class="caja" style="margin-top:20px">
+    <h2>4. Estimar la duración con IA</h2>
+    <p class="ayuda">Al cargar una tarea de producción muchas veces no se sabe cuánto va a durar. Un modelo de
+       <code>scikit-learn</code> la estima con el historial de 4.000 tareas ya hechas, y se compara con el
+       <b>promedio de su tipo</b> (sin IA). En la demo, <b>1 hora de producción = 1 segundo</b>.</p>
+    <div class="ia-form">
+      <label>Tipo <select id="ia-tipo"><option>corte</option><option selected>soldadura</option><option>pintura</option><option>armado</option><option>control</option></select></label>
+      <label>Unidades <input id="ia-cantidad" type="number" min="1" value="100"></label>
+      <label>Operarios <input id="ia-operarios" type="number" min="1" max="10" value="2"></label>
+      <label>Máquina <select id="ia-maquina"><option value="nueva">nueva</option><option value="vieja" selected>vieja</option></select></label>
+      <label>Nombre <input id="ia-nombre" value="S1"></label>
+      <button class="principal" onclick="estimar()">Estimar</button>
+    </div>
+    <div class="ia-res" id="ia-res"></div>
+    <div id="ia-comparacion"></div>
   </section>
 </main>
 
@@ -315,6 +342,44 @@ async function medirTodo() {
   boton.disabled = false;
 }
 
+// ---------- 4. IA ----------
+async function estimar() {
+  const tarea = {
+    tipo: document.getElementById("ia-tipo").value,
+    cantidad: parseInt(document.getElementById("ia-cantidad").value) || 1,
+    operarios: parseInt(document.getElementById("ia-operarios").value) || 1,
+    maquina: document.getElementById("ia-maquina").value,
+  };
+  const r = await enviar("/estimar", tarea);
+  if (r.error) { document.getElementById("ia-res").innerHTML = `<p class="error">${r.error}</p>`; return; }
+  const horas = Math.min(5, Math.max(0.5, Math.round(r.con_ia / 60 * 2) / 2));
+  document.getElementById("ia-res").innerHTML = `
+    <div class="ia-num ia"><b>${r.con_ia.toFixed(0)} min</b><span>con IA (modelo)</span></div>
+    <div class="ia-num"><b>${r.sin_ia.toFixed(0)} min</b><span>sin IA (promedio de ${tarea.tipo})</span></div>
+    <div class="ia-num"><button class="chico" onclick="usarEstimacion(${horas})">Agregar a las tareas (${horas.toString().replace(".", ",")} s)</button>
+      <span>usa la estimación con IA</span></div>`;
+}
+
+function usarEstimacion(horas) {
+  agregarFila([document.getElementById("ia-nombre").value || "T", horas, 1, ""]);
+  cambio();
+}
+
+async function cargarComparacion() {
+  const c = await (await fetch("/ia/comparacion")).json();
+  const fila = (n, d) => `<tr><td>${n}</td><td>${d.mae.toFixed(1).replace(".", ",")} min</td>
+    <td>${(d.estimar_us).toFixed(2).replace(".", ",")} µs</td><td>${(d.entrenar_s * 1000).toFixed(0)} ms</td>
+    <td>${d.memoria_mb.toFixed(2).replace(".", ",")} MB</td></tr>`;
+  document.getElementById("ia-comparacion").innerHTML = `
+    <table class="ia-tabla"><thead><tr><th>Estimador · 1.000 tareas nuevas</th><th>Error medio</th>
+      <th>Por estimación</th><th>Entrenar</th><th>Memoria</th></tr></thead>
+    <tbody>${fila("Sin IA: promedio del tipo", c.sin_ia)}${fila("Con IA: RandomForest", c.con_ia)}</tbody></table>
+    <p class="ayuda" style="margin-top:10px">La IA se equivoca ${(c.sin_ia.mae / c.con_ia.mae).toFixed(0)} veces menos porque tiene en cuenta
+      unidades, operarios y máquina, pero cada estimación cuesta ${(c.con_ia.estimar_us / c.sin_ia.estimar_us).toFixed(0)} veces más
+      (sigue siendo microsegundos). Conviene para planificar; si solo hay un tipo de tarea, alcanza el promedio.</p>`;
+}
+
+cargarComparacion();
 cargarPasos().then(() => { if (location.hash === "#medir") medirTodo(); });
 cargar("enunciado");
 // Atajo para demos: #ejecutar=2 ejecuta con 2 procesos al abrir la página.

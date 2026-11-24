@@ -5,9 +5,11 @@ Si existe ELASTIC_APM_SERVER_URL, Elastic APM mide cada pedido a la web.
 """
 
 import os
+from functools import lru_cache
 
 from flask import Flask, render_template, request
 
+import ia
 import optimizaciones
 import paralelo
 import planificador as pl
@@ -87,9 +89,36 @@ def medir():
     return {"segundos": segundos}
 
 
+@app.route("/estimar", methods=["POST"])
+def estimar():
+    """Duración estimada de una tarea de producción, con y sin IA."""
+    tarea = request.get_json()
+    if (tarea.get("tipo") not in ia.TIPOS
+            or tarea.get("maquina") not in ia.MAQUINAS):
+        return {"error": "Tipo o máquina desconocidos."}
+    if int(tarea.get("cantidad", 0)) < 1 or int(tarea.get("operarios", 0)) < 1:
+        return {"error": "Unidades y operarios tienen que ser al menos 1."}
+    return ia.estimar(tarea)
+
+
+@app.route("/ia/comparacion")
+def comparacion_ia():
+    """Error, tiempo y memoria de los dos estimadores (se mide una vez)."""
+    return comparacion_guardada()
+
+
+@lru_cache(maxsize=1)
+def comparacion_guardada() -> dict:
+    """La comparación se calcula la primera vez y después se reutiliza."""
+    return ia.comparar_estimadores()
+
+
 if __name__ == "__main__":
     print("Preparando datos de prueba...")
     for cantidad in (2000, 5000, 200_000):
         optimizaciones.tareas_de_prueba(cantidad)
+    # tracemalloc mide todo el proceso: se mide la IA antes de atender
+    # pedidos, para que no se sume la memoria de otros pedidos simultáneos.
+    comparacion_guardada()
     print("Abrí http://127.0.0.1:5050 en el navegador")
     app.run(port=5050)

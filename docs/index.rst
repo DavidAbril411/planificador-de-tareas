@@ -22,3 +22,4 @@ Cómo generar esta documentación:
    archivos
    app
    optimizaciones
+   ia

@@ -3,6 +3,7 @@ Planificador de tareas con dependencias (núcleo del Parcial 1, refactorizado).
 """
 
 import heapq
+import json
 from functools import lru_cache
 from typing import Dict, List, Optional, Tuple, TypedDict
 
