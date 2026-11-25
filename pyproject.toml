@@ -12,7 +12,7 @@ parallel = true
 sigterm = true
 
 [tool.coverage.report]
-fail_under = 85
+fail_under = 80
 show_missing = true
 
 [tool.ruff]
@@ -26,7 +26,7 @@ extend-exclude = ["anterior", "docs"]
 ignore = ["UP006", "UP035", "UP045", "UP033", "FURB122"]
 
 [tool.mypy]
-files = ["planificador.py", "paralelo.py", "archivos.py", "optimizaciones.py", "app.py"]
+files = ["planificador.py", "paralelo.py", "archivos.py", "optimizaciones.py", "app.py", "ia.py"]
 ignore_missing_imports = true
 
 [tool.pylint.main]

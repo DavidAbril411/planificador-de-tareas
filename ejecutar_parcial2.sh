@@ -9,6 +9,9 @@
 #   ./ejecutar_parcial2.sh scalene    -> Scalene: CPU por linea (abre el reporte)
 #   ./ejecutar_parcial2.sh snakeviz   -> cProfile + SnakeViz (abre el navegador)
 #   ./ejecutar_parcial2.sh pyspy      -> py-spy (pide la clave: macOS exige root)
+#   ./ejecutar_parcial2.sh ia         -> compara la IA contra el promedio
+#   ./ejecutar_parcial2.sh escalabilidad -> tiempos por tamaño y Performance Gate
+#   ./ejecutar_parcial2.sh obsidian   -> abre la documentacion en Obsidian
 
 cd "$(dirname "$0")" || exit 1
 export PATH="$PWD/.venv/bin:$HOME/Library/Python/3.14/bin:$PATH"
@@ -36,7 +39,10 @@ case "$1" in
   snakeviz)
     python3 -m cProfile -o reportes/perfilar.prof perfilar.py
     snakeviz reportes/perfilar.prof ;;
-  docs)    sphinx-build -b html docs docs/_build/html ;;
+  docs)    sphinx-build -q -b html docs docs/_build/html && open docs/_build/html/index.html ;;
+  ia)      python3 ia.py ;;
+  escalabilidad) PYTHONPATH=. python3 ci/escalabilidad.py ;;
+  obsidian) open "obsidian://open?path=$PWD/documentacion/Inicio.md" ;;
   calidad) flake8 *.py; pylint *.py ;;
   *)       python3 parcial2.py ;;
 esac

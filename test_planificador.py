@@ -9,8 +9,12 @@ import os
 import tempfile
 import unittest
 
+from hypothesis import given, settings
+from hypothesis import strategies as st
+
 import app
 import archivos
+import ia
 import optimizaciones
 import paralelo
 import planificador as pl
@@ -238,6 +242,88 @@ class TestParalelo(unittest.TestCase):
         registro = paralelo.ejecutar(tareas, 2)
         for nombre in ("B", "C"):
             self.assertGreaterEqual(registro[nombre][0], registro["A"][1])
+
+
+TAREA_IA = {"tipo": "soldadura", "cantidad": 100, "operarios": 2,
+            "maquina": "vieja"}
+
+
+class TestIA(unittest.TestCase):
+    """La estimación con IA funciona y le gana al promedio."""
+
+    def test_estima_un_numero_positivo(self):
+        """Las dos estimaciones son números positivos."""
+        resultado = ia.estimar(TAREA_IA)
+        self.assertGreater(resultado["con_ia"], 0)
+        self.assertGreater(resultado["sin_ia"], 0)
+
+    def test_ia_le_gana_al_promedio(self):
+        """Con tareas nuevas, la IA se equivoca menos que el promedio."""
+        comparacion = ia.comparar_estimadores(entrenamiento=1500, prueba=300)
+        self.assertLess(comparacion["con_ia"]["mae"],
+                        comparacion["sin_ia"]["mae"])
+
+    def test_historial_reproducible(self):
+        """La misma semilla genera el mismo historial."""
+        self.assertEqual(ia.generar_historial(20), ia.generar_historial(20))
+
+    def test_ruta_estimar(self):
+        """La web devuelve las dos estimaciones."""
+        datos = app.app.test_client().post(
+            "/estimar", json=TAREA_IA).get_json()
+        self.assertIn("con_ia", datos)
+
+    def test_ruta_estimar_rechaza_datos_invalidos(self):
+        """Un tipo desconocido devuelve un error claro."""
+        datos = app.app.test_client().post(
+            "/estimar", json=dict(TAREA_IA, tipo="volar")).get_json()
+        self.assertIn("error", datos)
+
+
+@st.composite
+def proyectos(draw):
+    """Hypothesis genera proyectos al azar sin ciclos (cada tarea depende
+    solo de tareas anteriores)."""
+    cantidad = draw(st.integers(min_value=1, max_value=25))
+    tareas = {}
+    for i in range(cantidad):
+        anteriores = draw(st.lists(st.integers(0, max(i - 1, 0)),
+                                   max_size=3, unique=True)) if i else []
+        tareas[f"T{i}"] = {
+            "duracion": draw(st.floats(0.1, 5, allow_nan=False)),
+            "prioridad": draw(st.integers(1, 10)),
+            "depende_de": [f"T{j}" for j in anteriores]}
+    return tareas
+
+
+class TestPropiedades(unittest.TestCase):
+    """Casos generados automáticamente con Hypothesis."""
+
+    @settings(max_examples=150, deadline=None)
+    @given(proyectos())
+    def test_orden_respeta_dependencias(self, tareas):
+        """En cualquier proyecto, nadie va antes de lo que necesita."""
+        orden = pl.orden_rapido(tareas)
+        posicion = {nombre: i for i, nombre in enumerate(orden)}
+        for nombre, tarea in tareas.items():
+            for anterior in tarea["depende_de"]:
+                self.assertLess(posicion[anterior], posicion[nombre])
+
+    @settings(max_examples=150, deadline=None)
+    @given(proyectos())
+    def test_lento_y_rapido_coinciden(self, tareas):
+        """Las dos versiones del algoritmo dan siempre el mismo orden."""
+        self.assertEqual(pl.orden_lento(tareas), pl.orden_rapido(tareas))
+
+    @settings(max_examples=150, deadline=None)
+    @given(proyectos(), st.integers(1, 8))
+    def test_mas_recursos_nunca_tarda_mas_que_uno(self, tareas, recursos):
+        """Con recursos, nunca se tarda más que de a una ni menos que el
+        camino crítico."""
+        duracion = pl.duracion_con_recursos(tareas, recursos)
+        self.assertLessEqual(duracion,
+                             pl.duracion_con_recursos(tareas, 1) + 1e-9)
+        self.assertGreaterEqual(duracion, pl.duracion_minima(tareas) - 1e-9)
 
 
 def load_tests(_loader, tests, _ignore):

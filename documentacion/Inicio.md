@@ -6,6 +6,7 @@ El repositorio es el lugar compartido: lo puede leer cualquiera, solo los colabo
 
 ## Contenido
 
+0. [Ficha del proyecto](00-ficha-del-proyecto.md)
 1. [Descripción funcional](01-descripcion-funcional.md)
 2. [Arquitectura](02-arquitectura.md)
 3. [Instalación y ejecución](03-instalacion-y-ejecucion.md)
@@ -16,3 +17,4 @@ El repositorio es el lugar compartido: lo puede leer cualquiera, solo los colabo
 8. [Seguridad](08-seguridad.md)
 9. [Mantenimiento](09-mantenimiento.md)
 10. [Controles del CI](10-controles-del-ci.md)
+11. [IA aplicada](11-ia-aplicada.md)
