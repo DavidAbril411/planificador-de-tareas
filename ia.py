@@ -5,7 +5,7 @@ En una planta de producción, al cargar una tarea muchas veces no se sabe
 cuánto va a durar. Se estima a partir del historial de tareas ya hechas, de
 dos formas:
 
-* sin IA: el promedio histórico de su tipo;
+* sin IA: los minutos promedio por unidad de su tipo, por la cantidad;
 * con IA: un modelo de regresión que además mira la cantidad de unidades,
   los operarios y la máquina.
 
@@ -79,14 +79,25 @@ def caracteristicas(tarea: Mapping) -> List[float]:
 # ---------------------------------------------------------------------------
 
 def entrenar_promedio(historial: List[Registro]) -> Dict[str, float]:
-    """Duración promedio de cada tipo. Entrenar es O(n); estimar, O(1)."""
+    """
+    Minutos promedio por unidad de cada tipo. Entrenar es O(n); estimar, O(1).
+
+    Estimar es ese promedio por la cantidad de unidades: tiene en cuenta el
+    tipo y la cantidad, pero no los operarios ni la máquina.
+    """
     sumas: Dict[str, float] = {}
     cuentas: Dict[str, int] = {}
     for registro in historial:
         tipo = registro["tipo"]
-        sumas[tipo] = sumas.get(tipo, 0.0) + registro["duracion"]
+        por_unidad = registro["duracion"] / registro["cantidad"]
+        sumas[tipo] = sumas.get(tipo, 0.0) + por_unidad
         cuentas[tipo] = cuentas.get(tipo, 0) + 1
     return {tipo: suma / cuentas[tipo] for tipo, suma in sumas.items()}
+
+
+def estimar_sin_ia(promedio: Dict[str, float], tarea: Mapping) -> float:
+    """Minutos por unidad del tipo × cantidad de unidades."""
+    return promedio[tarea["tipo"]] * tarea["cantidad"]
 
 
 # ---------------------------------------------------------------------------
@@ -122,7 +133,7 @@ def estimar(tarea: Mapping) -> Dict[str, float]:
     promedio, modelo = estimadores()
     con_ia = float(modelo.predict([caracteristicas(tarea)])[0])
     return {"con_ia": round(con_ia, 1),
-            "sin_ia": round(promedio[tarea["tipo"]], 1)}
+            "sin_ia": round(estimar_sin_ia(promedio, tarea), 1)}
 
 
 # ---------------------------------------------------------------------------
@@ -163,7 +174,8 @@ def comparar_estimadores(entrenamiento: int = 4000,
     return {
         "sin_ia": medir(
             entrenar_promedio,
-            lambda promedio, tareas: [promedio[t["tipo"]] for t in tareas],
+            lambda promedio, tareas: [estimar_sin_ia(promedio, t)
+                                      for t in tareas],
             historial, nuevas),
         "con_ia": medir(
             entrenar_modelo,

@@ -37,7 +37,7 @@ Cada tarea tiene una duración, una prioridad y las tareas que tiene que esperar
 
 ## IA aplicada
 
-- **En la aplicación:** un `RandomForestRegressor` estima la duración de una tarea según su tipo, unidades, operarios y máquina, y se compara contra el promedio del tipo.
+- **En la aplicación:** un `RandomForestRegressor` estima la duración de una tarea según su tipo, unidades, operarios y máquina, y se compara contra el promedio por unidad del tipo × la cantidad.
 - **En el desarrollo:** Hypothesis genera casos de prueba automáticamente, y un asistente de IA (Claude) ayudó a escribir código y pruebas. Cada propuesta se validó con los controles del CI.
 
 ## Métricas de rendimiento
@@ -47,7 +47,7 @@ Cada tarea tiene una duración, una prioridad y las tareas que tiene que esperar
 | Ordenar 100.000 tareas | ~0,3 s (límite del gate: 1 s) |
 | Crecimiento de `orden_rapido` por 10 de entrada | ~13x (lineal) |
 | Crecimiento de `orden_lento` por 2 de entrada | ~4x (cuadrático) |
-| Error de la IA contra el promedio | 8 min contra 93 min |
+| Error de la IA contra el promedio | 8 min contra 74 min |
 | Memoria leyendo por lotes | 2,4 MB contra 14,1 MB |
 | Paralelismo, 8 tareas de CPU | ~5x más rápido |
 

@@ -8,8 +8,8 @@ Al cargar una tarea de producción muchas veces no se sabe cuánto va a durar. E
 
 | | Sin IA | Con IA |
 |---|---|---|
-| Método | Promedio de duración del tipo | `RandomForestRegressor` de scikit-learn |
-| Qué mira | Solo el tipo | Tipo, unidades, operarios y máquina |
+| Método | Minutos promedio por unidad del tipo × cantidad | `RandomForestRegressor` de scikit-learn |
+| Qué mira | Tipo y cantidad | Tipo, unidades, operarios y máquina |
 | Estructura | `dict`, estimar es O(1) | 60 árboles de hasta 12 niveles |
 
 El historial es sintético y reproducible: 4.000 tareas con una duración que depende de esos datos, más un 10 % de ruido.
@@ -20,12 +20,12 @@ Sobre 1.000 tareas que ninguno de los dos vio al entrenar (`ia.comparar_estimado
 
 | Estimador | Error medio | Por estimación | Entrenar | Memoria |
 |---|---|---|---|---|
-| Sin IA | 92,6 min | 0,05 µs | 1 ms | 0,001 MB |
+| Sin IA | 73,5 min | 0,05 µs | 1 ms | 0,001 MB |
 | Con IA | 8,0 min | ~9 µs | ~0,45 s | 1,5 MB |
 
 ## Cuándo conviene
 
-La IA se equivoca 11,6 veces menos porque usa los datos que realmente cambian la duración. Cuesta unas 200 veces más por estimación, pero siguen siendo microsegundos: para planificar conviene. Si la planta tuviera un solo tipo de tarea y siempre la misma cantidad, el promedio alcanzaría, sería más simple y no necesitaría scikit-learn.
+La IA se equivoca 9,2 veces menos porque además usa los operarios y la máquina, que la fórmula simple ignora. Cuesta unas 200 veces más por estimación, pero siguen siendo microsegundos: para planificar conviene. Si la planta tuviera un solo tipo de tarea y siempre los mismos operarios y máquina, el promedio alcanzaría, sería más simple y no necesitaría scikit-learn.
 
 El modelo se entrena una sola vez y queda en caché (`lru_cache`).
 
