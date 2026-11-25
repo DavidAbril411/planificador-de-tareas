@@ -376,7 +376,7 @@ async function cargarComparacion() {
     <tbody>${fila("Sin IA: promedio por unidad × cantidad", c.sin_ia)}${fila("Con IA: RandomForest", c.con_ia)}</tbody></table>
     <p class="ayuda" style="margin-top:10px">La IA se equivoca ${(c.sin_ia.mae / c.con_ia.mae).toFixed(1).replace(".", ",")} veces menos porque además tiene en cuenta
       operarios y máquina, pero cada estimación cuesta ${(c.con_ia.estimar_us / c.sin_ia.estimar_us).toFixed(0)} veces más
-      (sigue siendo microsegundos). Conviene para planificar; si solo hay un tipo de tarea, alcanza el promedio.</p>`;
+      (sigue siendo microsegundos). Conviene para planificar; si siempre son los mismos operarios y máquina, alcanza el promedio.</p>`;
 }
 
 cargarComparacion();

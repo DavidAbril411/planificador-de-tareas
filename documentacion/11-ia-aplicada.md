@@ -20,12 +20,12 @@ Sobre 1.000 tareas que ninguno de los dos vio al entrenar (`ia.comparar_estimado
 
 | Estimador | Error medio | Por estimación | Entrenar | Memoria |
 |---|---|---|---|---|
-| Sin IA | 73,5 min | 0,05 µs | 1 ms | 0,001 MB |
+| Sin IA | 73,5 min | ~0,1 µs | 1 ms | 0,001 MB |
 | Con IA | 8,0 min | ~9 µs | ~0,45 s | 1,5 MB |
 
 ## Cuándo conviene
 
-La IA se equivoca 9,2 veces menos porque además usa los operarios y la máquina, que la fórmula simple ignora. Cuesta unas 200 veces más por estimación, pero siguen siendo microsegundos: para planificar conviene. Si la planta tuviera un solo tipo de tarea y siempre los mismos operarios y máquina, el promedio alcanzaría, sería más simple y no necesitaría scikit-learn.
+La IA se equivoca 9,2 veces menos porque además usa los operarios y la máquina, que la fórmula simple ignora. Cuesta unas 90 veces más por estimación, pero siguen siendo microsegundos: para planificar conviene. Si la planta tuviera un solo tipo de tarea y siempre los mismos operarios y máquina, el promedio alcanzaría, sería más simple y no necesitaría scikit-learn.
 
 El modelo se entrena una sola vez y queda en caché (`lru_cache`).
 
